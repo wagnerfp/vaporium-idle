@@ -1,0 +1,135 @@
+:root {
+  --bg: #100e12;
+  --bg2: #1c1614;
+  --panel: #261e1c;
+  --copper: #c47e3e;
+  --copper-hi: #e8ae64;
+  --text: #d8c4ae;
+  --muted: #8f7c68;
+  --danger: #b0492f;
+  --ok: #6f9e4f;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: linear-gradient(180deg, var(--bg), var(--bg2));
+  color: var(--text);
+  font-family: Georgia, 'Times New Roman', serif;
+  min-height: 100vh;
+}
+#app { max-width: 720px; margin: 0 auto; padding: 12px; }
+header { text-align: center; padding: 18px 0 10px; }
+header h1 { color: var(--copper-hi); letter-spacing: 6px; font-size: 2rem; }
+.tagline { color: var(--muted); font-style: italic; font-size: .9rem; }
+.loading { text-align: center; color: var(--muted); padding: 40px; }
+
+.card {
+  background: var(--panel);
+  border: 1px solid #3d2f24;
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.card h2 { color: var(--copper-hi); font-size: 1.05rem; margin-bottom: 8px; }
+
+input, button {
+  font: inherit;
+  border-radius: 6px;
+  padding: 10px;
+  width: 100%;
+}
+input {
+  background: #14100e;
+  border: 1px solid #3d2f24;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+button {
+  background: var(--copper);
+  border: none;
+  color: #14100e;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 4px;
+}
+button:hover { background: var(--copper-hi); }
+button:disabled { opacity: .45; cursor: default; }
+button.sec { background: #3d2f24; color: var(--text); }
+button.sec:hover { background: #4d3b2c; }
+
+.erro { color: var(--danger); font-size: .85rem; margin: 6px 0; min-height: 1em; }
+.link { color: var(--copper-hi); cursor: pointer; font-size: .85rem; text-decoration: underline; }
+
+.voc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.voc-card {
+  background: #14100e;
+  border: 1px solid #3d2f24;
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+}
+.voc-card:hover, .voc-card.sel { border-color: var(--copper); }
+.voc-card h3 { color: var(--copper-hi); font-size: .95rem; margin-bottom: 4px; }
+.voc-card p { font-size: .78rem; color: var(--muted); }
+.voc-card .stats { margin-top: 6px; font-size: .75rem; color: var(--text); }
+
+.bar {
+  background: #14100e;
+  border: 1px solid #3d2f24;
+  border-radius: 5px;
+  height: 18px;
+  margin: 6px 0;
+  position: relative;
+  overflow: hidden;
+}
+.bar > div { height: 100%; transition: width .4s; }
+.bar.hp > div { background: linear-gradient(90deg, #7c2d20, #b0492f); }
+.bar.xp > div { background: linear-gradient(90deg, #6b4a1e, var(--copper)); }
+.bar span {
+  position: absolute; inset: 0;
+  text-align: center; font-size: .72rem; line-height: 18px; color: #fff;
+  text-shadow: 0 1px 2px #000;
+}
+
+.statline { display: flex; justify-content: space-between; font-size: .85rem; padding: 2px 0; }
+.statline b { color: var(--copper-hi); }
+
+#log {
+  background: #14100e;
+  border: 1px solid #3d2f24;
+  border-radius: 6px;
+  height: 180px;
+  overflow-y: auto;
+  padding: 8px;
+  font-size: .8rem;
+}
+#log p { padding: 2px 0; border-bottom: 1px solid #221a16; }
+#log p:last-child { border: none; }
+#log .ts { color: var(--muted); font-size: .7rem; margin-right: 4px; }
+
+.lista { list-style: none; }
+.lista li {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 8px; padding: 8px 0; border-bottom: 1px solid #33271f;
+  font-size: .85rem;
+}
+.lista li:last-child { border: none; }
+.lista .nome { flex: 1; }
+.lista .nome small { display: block; color: var(--muted); font-size: .72rem; }
+.lista button { width: auto; padding: 6px 10px; font-size: .78rem; margin: 0; }
+.badge { color: var(--ok); font-size: .72rem; }
+
+nav.tabs { display: flex; gap: 6px; margin: 10px 0; flex-wrap: wrap; }
+nav.tabs button {
+  width: auto; flex: 1; min-width: 90px;
+  background: #14100e; color: var(--muted);
+  border: 1px solid #3d2f24; padding: 8px;
+}
+nav.tabs button.ativo { background: var(--copper); color: #14100e; }
+
+.cacando { color: var(--ok); font-weight: bold; }
+.parado { color: var(--muted); }
+
+@media (min-width: 640px) {
+  header h1 { font-size: 2.6rem; }
+  #log { height: 220px; }
+}
