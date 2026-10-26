@@ -99,11 +99,27 @@ case 'state': {
          WHERE ci.character_id = ? ORDER BY ci.equipped DESC, i.price'
     );
     $st->execute([$char['id']]);
+    $inventory = $st->fetchAll();
+
+    $enemy = null;
+    if ($char['area_id'] !== null && $char['last_enemy_id'] !== null) {
+        $st = $db->prepare('SELECT id, name, hp FROM monsters WHERE id = ?');
+        $st->execute([$char['last_enemy_id']]);
+        $m = $st->fetch();
+        if ($m) {
+            $enemy = [
+                'id' => (int) $m['id'],
+                'name' => $m['name'],
+                'img' => "assets/img/tibia/monsters/{$m['id']}.png",
+            ];
+        }
+    }
 
     json_out([
         'char' => [
             'name' => $char['name'],
             'vocation' => $stats['vocation']['name'],
+            'vocation_id' => (int) $char['vocation_id'],
             'level' => (int) $char['level'],
             'exp' => (int) $char['experience'],
             'exp_next' => exp_next((int) $char['level']),
@@ -117,8 +133,9 @@ case 'state': {
             'hunting' => $char['area_id'] !== null,
             'area_id' => $char['area_id'] !== null ? (int) $char['area_id'] : null,
         ],
+        'enemy' => $enemy,
         'log' => $log,
-        'inventory' => $st->fetchAll(),
+        'inventory' => $inventory,
         'areas' => $db->query('SELECT * FROM areas ORDER BY min_level')->fetchAll(),
         'shop' => $db->query('SELECT * FROM items ORDER BY slot, price')->fetchAll(),
     ]);

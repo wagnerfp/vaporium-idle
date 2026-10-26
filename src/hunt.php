@@ -24,6 +24,7 @@ function process_char(array $char): array {
     $pm = (int) $char['potions_m'];
     $logs = [];
     $itemsGained = [];
+    $lastEnemy = null;
 
     for ($i = 0; $i < $ticks; $i++) {
         if (!$hunting) {
@@ -61,6 +62,7 @@ function process_char(array $char): array {
             $logs[] = "Voce foi derrotado por {$m['name']} e arrastado de volta a Vapor Alto.";
             break;
         }
+        $lastEnemy = (int) $m['id'];
         if ($mhp > 0) {
             $logs[] = "{$m['name']} resistiu demais — voce recuou para se recompor.";
             continue;
@@ -93,10 +95,11 @@ function process_char(array $char): array {
     $db->beginTransaction();
     $db->prepare(
         'UPDATE characters SET level=?, experience=?, gold=?, hp_cur=?, area_id=?,
-         hunt_since=?, potions_s=?, potions_m=?, last_tick_at=NOW() WHERE id=?'
+         last_enemy_id=?, hunt_since=?, potions_s=?, potions_m=?, last_tick_at=NOW() WHERE id=?'
     )->execute([
         $level, $exp, $gold, $hp,
         $hunting ? $char['area_id'] : null,
+        $hunting ? $lastEnemy : null,
         $hunting ? $char['hunt_since'] : null,
         $ps, $pm, $char['id'],
     ]);

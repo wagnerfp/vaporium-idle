@@ -92,6 +92,7 @@ async function showCreateChar() {
 async function refresh() {
   try {
     state = await api('state');
+    updateExpRate(state.char.exp);
     renderGame();
   } catch (e) {
     stopPolling();
@@ -126,14 +127,16 @@ function renderGame() {
 
   setView(`
     <div class="card">
-      <h2>${esc(c.name)} <small style="color:var(--muted)">${esc(c.vocation)} — nivel ${c.level}</small></h2>
+      <h2><img class="voc-ico" src="assets/img/voc/${c.vocation_id}.png" alt="">
+        ${esc(c.name)} <small style="color:var(--muted)">${esc(c.vocation)} — nivel ${c.level}</small></h2>
       ${bar('hp', c.hp, c.hp_max)}
       ${bar('xp', c.exp, c.exp_next)}
       <div class="statline"><span>Ataque <b>${c.atk}</b> &middot; Defesa <b>${c.def}</b></span>
       <span>Ouro <b>${c.gold}</b> &middot; Pocoes <b>${c.potions_s}s/${c.potions_m}m</b></span></div>
       <div class="statline"><span class="${c.hunting ? 'cacando' : 'parado'}">
         ${c.hunting ? 'Cacando em ' + esc(nomeArea(c.area_id)) : 'Descansando em Vapor Alto'}</span>
-        <span class="link" id="sair">Sair</span></div>
+        <span><span style="color:var(--muted);font-size:.75rem">~${expPerMin} exp/min</span>
+        &nbsp;<span class="link" id="sair">Sair</span></span></div>
     </div>
     <nav class="tabs">${tabs.map(([k, l]) =>
       `<button class="${tab === k ? 'ativo' : ''}" data-tab="${k}">${l}</button>`).join('')}</nav>
@@ -155,20 +158,44 @@ function nomeArea(id) {
   return a ? a.name : '';
 }
 
+const AREA_BG = {1:'tubulacoes',2:'minas',3:'ermo',4:'forja',5:'ninho'};
+
 function renderCaca() {
-  return `
+  const c = state.char;
+  let battle = '';
+  if (c.hunting) {
+    const bg = AREA_BG[c.area_id] || 'tubulacoes';
+    battle = `
+    <div class="batalha" style="background-image:url('assets/img/areas/${bg}.jpg')">
+      <div class="lutador">
+        <img class="boneco" src="assets/img/voc/${c.vocation_id}.png" alt="">
+        <div class="bar hp mini"><div style="width:${Math.round(100*c.hp/Math.max(1,c.hp_max))}%"></div></div>
+        <span>${esc(c.name)}</span>
+      </div>
+      <div class="vs">VS</div>
+      <div class="lutador" id="enemy">
+        ${state.enemy
+          ? `<img class="boneco inimigo" src="${state.enemy.img}" alt=""><span>${esc(state.enemy.name)}</span>`
+          : '<span class="procurando">procurando alvo...</span>'}
+      </div>
+    </div>`;
+  }
+  return battle + `
     <div class="card"><h2>Registro de caca</h2>
       <div id="log">${state.log.map(l =>
         `<p><span class="ts">${esc(l.ts.slice(11, 19))}</span>${esc(l.message)}</p>`).join('')}</div>
     </div>
     <div class="card"><h2>Areas de caca</h2>
-      <ul class="lista">${state.areas.map(a => `
-        <li>
-          <span class="nome">${esc(a.name)} <small>nivel ${a.min_level}+ — ${esc(a.descricao)}</small></span>
-          ${state.char.area_id == a.id
-            ? '<button class="sec" data-stop="1">Parar</button>'
-            : `<button data-area="${a.id}" ${state.char.level < a.min_level ? 'disabled' : ''}>Cacar</button>`}
-        </li>`).join('')}</ul>
+      ${state.areas.map(a => `
+      <div class="area-card" style="background-image:url('assets/img/areas/${AREA_BG[a.id]}.jpg')">
+        <div class="area-info">
+          <b>${esc(a.name)}</b> <small>nivel ${a.min_level}+</small>
+          <p>${esc(a.descricao)}</p>
+        </div>
+        ${c.area_id == a.id
+          ? '<button class="sec" data-stop="1">Parar</button>'
+          : `<button data-area="${a.id}" ${c.level < a.min_level ? 'disabled' : ''}>Cacar</button>`}
+      </div>`).join('')}
     </div>`;
 }
 
@@ -176,6 +203,7 @@ function renderMochila() {
   if (!state.inventory.length) return '<div class="card"><h2>Mochila</h2><p class="loading">Vazia.</p></div>';
   return `<div class="card"><h2>Mochila</h2><ul class="lista">${state.inventory.map(i => `
     <li>
+      <img class="item-ico" src="assets/img/tibia/items/${i.id}.png" alt="">
       <span class="nome">${esc(i.name)}
         <small>${i.slot === 'arma' ? 'ATQ +' + i.attack : 'DEF +' + i.defense} — nivel ${i.min_level}+</small></span>
       ${i.equipped == 1
@@ -187,10 +215,13 @@ function renderMochila() {
 function renderLoja() {
   return `<div class="card"><h2>Loja de Vapor Alto</h2>
     <ul class="lista">
-      <li><span class="nome">Pocao de Vapor <small>cura 60 HP (uso automatico)</small></span><button data-potion="s">25 ouro</button></li>
-      <li><span class="nome">Pocao de Brasa <small>cura 180 HP (uso automatico)</small></span><button data-potion="m">80 ouro</button></li>
+      <li><img class="item-ico" src="assets/img/tibia/items/101.png" alt="">
+        <span class="nome">Pocao de Vapor <small>cura 60 HP (uso automatico)</small></span><button data-potion="s">25 ouro</button></li>
+      <li><img class="item-ico" src="assets/img/tibia/items/102.png" alt="">
+        <span class="nome">Pocao de Brasa <small>cura 180 HP (uso automatico)</small></span><button data-potion="m">80 ouro</button></li>
       ${state.shop.map(i => `
       <li>
+        <img class="item-ico" src="assets/img/tibia/items/${i.id}.png" alt="">
         <span class="nome">${esc(i.name)}
           <small>${i.slot === 'arma' ? 'ATQ +' + i.attack : 'DEF +' + i.defense} — nivel ${i.min_level}+${i.vocation_id ? ' — vocacao especifica' : ''}</small></span>
         <button data-buy="${i.id}" ${state.char.gold < i.price ? 'disabled' : ''}>${i.price} ouro</button>
@@ -199,6 +230,17 @@ function renderLoja() {
 }
 
 let rankingCache = null;
+let prevExp = null, prevExpAt = null, expPerMin = 0;
+
+function updateExpRate(exp) {
+  const now = Date.now();
+  if (prevExp !== null && now - prevExpAt > 30000 && exp >= prevExp) {
+    expPerMin = Math.round((exp - prevExp) / ((now - prevExpAt) / 60000));
+    prevExp = exp; prevExpAt = now;
+  } else if (prevExp === null) {
+    prevExp = exp; prevExpAt = now;
+  }
+}
 function renderRanking() {
   if (!rankingCache) {
     api('ranking').then(j => { rankingCache = j.ranking; if (tab === 'ranking') renderGame(); });
